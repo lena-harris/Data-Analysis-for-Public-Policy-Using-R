@@ -1,0 +1,219 @@
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+```{css, echo = FALSE}
+table, td, th {
+  border: none;
+  padding-left: 1em;
+  padding-right: 1em;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+```
+
+
+# Creating presentations with R Markdown
+
+
+## Brief overview of ioslides | Creating slides with R Markdown 
+
+- To create an **ioslides** presentation from R Markdown, specify *ioslides_presentation* in the YAML header 
+  + **beamer** and **slidy** are other presentation types
+  
+```{r, echo = TRUE, eval = FALSE}
+---
+title: "Formatted Output & R Markdown Presentations"
+output:
+  ioslides_presentation: default
+---
+```
+
+
+## Brief overview of ioslides | Creating slides with R Markdown {.build}
+
+<div>
+- Use # for a new section, ## for a new slide, and | for adding a subtitle
+</div>
+
+<div>
+- Can set slides to display smaller text {.smaller} or display the slide content incrementally {.build} as in this slide.
+</div>
+```{r, echo = TRUE}
+## Slide title {.smaller .build}
+```
+<div>
+[Here](https://garrettgman.github.io/rmarkdown/ioslides_presentation_format.html) is a short tutorial. See Chapter 4.1 in [R Markdown: The Definitive Guide]( https://bookdown.org/yihui/rmarkdown/ioslides-presentation.html) for a more comprehensive treatment.
+</div>
+
+
+# Including output in your slides
+
+
+## Loading packages {.smaller .build}
+
+<div>
+This presentation uses some familiar packages to generate and display results:
+
+- `tidyverse`
+- `fixest`
+- `lmtest`
+- `multiwayvcov`
+- `kableExtra` 
+</div>
+<div>
+Plus some packages for creating tables with formatted output:
+
+- `stargazer`
+- `modelsummary`
+
+</div>
+```{r}
+library(tidyverse)
+library(fixest)
+library(modelsummary)
+library(stargazer)
+library(kableExtra)
+library(lmtest)
+library(multiwayvcov)
+library(sandwich)
+```
+
+
+
+## Loading data objects for this presentation {.smaller}
+
+<div>
+Load in the data objects you need, saved after creating in your R script.
+</div>
+<div>
+Can load an **.rdata** file with many objects:
+```{r load rdata, echo = TRUE}
+load("formatted_output_slides.RData") #includes objects from diff lessons
+```
+</div>
+<div>
+Or you can load an **.rds** file for a single object:
+```{r load rds, echo = TRUE}
+feDF <- readRDS(file = "feDF.rds") #a single data frame from the Medicaid lesson
+```
+</div>
+
+
+## Difference-in-means tables 
+
+Suppose we're interested in comparing the *poverty rate* and *vfund_per_poor* of regencies between Java and Sulawesi islands.
+
+[Here](https://sebastiansauer.github.io/multiple-t-tests-with-dplyr/) is a tutorial for making this kind of table using `tidyverse` functions. 
+
+```{r preprocessing 1}
+vf_province <- vf_joined %>%
+  mutate(island = if_else(str_starts(province, 'Jawa') | 
+                            province == 'Banten' | 
+                            province == 'Di Yogyakarta', 
+                          'Java', 
+                          if_else(str_starts(province, 'Sulawesi') | 
+                                    province == 'Gorontalo',
+                                  'Sulawesi', 'Other'))) %>%
+  filter(island != 'Other') %>%
+  mutate(vfund_per_poor = vfund_per_poor/1000) %>% 
+  select('poverty', 'vfund_per_poor', 'island')
+```
+
+```{r preprocessing 2}
+vf_diff <- vf_province %>%
+  
+  pivot_longer(!island, names_to = "variable", values_to = "value") %>%
+    group_by(island, variable) %>%
+    summarise(value = list(value)) %>%
+  
+  pivot_wider(names_from = "island", values_from = "value") %>%
+  
+  group_by(variable) %>%
+  mutate(mean_java = round(mean(unlist(Java)), 2),
+         mean_sulawesi = round(mean(unlist(Sulawesi)), 2),
+         diff = round(mean_java - mean_sulawesi,2),
+         p_value = t.test(unlist(Java), unlist(Sulawesi), var.equal = FALSE)$p.value) %>%
+  mutate(p_value = sprintf("%.3f", round(p_value, 3))) %>%
+  
+  select(-Java, -Sulawesi)
+
+vf_diff$variable <- c("Population in poverty (1000s)", "VF allocation/poor resident ($1000s)")
+```
+
+```{r output}
+kable(vf_diff, 
+      align = "l",
+      col.names = c("Variable", 
+                    "Java", 
+                    "Sulawesi", 
+                    "Difference", 
+                    "p-value")) %>% 
+      kable_paper("hover", 
+                  full_width = F, 
+                  html_font = "Helvetica") %>% 
+      kable_styling(font_size = 20)
+```
+
+
+
+## Difference-in-means tables {.smaller .build}
+
+<div>
+Here is another example using the `datasummary_balance()` [function](https://modelsummary.com/man/datasummary_balance.html) in the `modelsummary` [package](https://vincentarelbundock.github.io/modelsummary/index.html).
+
+```{r datasummary}
+#only look at year of Medicaid implementation for this example
+feDFty <- feDF %>% 
+  filter(year == year_mcaid) %>% 
+  mutate(treat = as.factor(ifelse(high_eligibility == 1, 
+                                  "High-Eligibility", 
+                                  "Low-Eligibility")) ) %>% #get labelled treat var
+  rename(weights = child_pop) %>%  
+    #datasummary function only recognizes weights if under column by that name
+  select(treat, afdc_rate, income_pc, hospitals_pc, beds_pc, weights) 
+
+#show diff between treatment groups (high/low elig.) in AFDC rate & controls
+datasummary_balance(~treat,
+                    data = feDFty,
+                    fmt = 2,
+                    dinm_statistic = "p.value",
+                    title = "Difference-in-means during year of Medicaid implementation by state eligilibity",
+                    notes = "Note: States are weighted by child population.")
+```
+</div>
+<div>
+**Upside to this function:**
+
+- Can show formatted output without much work
+
+**Downside:**
+
+- Isn't very flexible compared to previous approach
+</div>
+
+
+## Using Stargazer for formatted output {.smaller}
+
+`stargazer` is an R package that creates LATEX code, HTML code and ASCII text for well-formatted regression tables, with multiple models side-by-side, as well as for summary statistics tables, data frames, vectors and matrices."
+
+[Here](https://www.jakeruss.com/cheatsheets/stargazer) is a good tutorial with numerous stargazer examples and formatting options.
+
+
+
+## Regression results {.smaller .build}
+
+<div>
+Make we sure we know your PRF before reporting regression results!
+</div>
+
+<div>
+We should also know how you estimate SEs, weight observations, and any other critical details.
+</div>
+
+<div>
+For our Medicaid example, here is the PRF for our base difference-in-difference model with state and year fixed effects, 
+
+$$Y_{st} = \beta D_{st} + X_{st}' \gamma + \mu_s + \tau_t + \varepsilon_{st}$$
