@@ -1,6 +1,12 @@
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 ```
+---
+title: "HUBZone Policy Analysis"
+output:
+  ioslides_presentation: default
+---
+```
 
 ```{css, echo = FALSE}
 table, td, th {
@@ -14,25 +20,9 @@ table, td, th {
 }
 ```
 
+## Research Question | Measuring Supplier Diversity {.build}
 
-# Creating presentations with R Markdown
-
-
-## Brief overview of ioslides | Creating slides with R Markdown 
-
-- To create an **ioslides** presentation from R Markdown, specify *ioslides_presentation* in the YAML header 
-  + **beamer** and **slidy** are other presentation types
-  
-```{r, echo = TRUE, eval = FALSE}
----
-title: "Formatted Output & R Markdown Presentations"
-output:
-  ioslides_presentation: default
----
-```
-
-
-## Brief overview of ioslides | Creating slides with R Markdown {.build}
+- Reserch question here
 
 <div>
 - Use # for a new section, ## for a new slide, and | for adding a subtitle
@@ -42,15 +32,29 @@ output:
 - Can set slides to display smaller text {.smaller} or display the slide content incrementally {.build} as in this slide.
 </div>
 ```{r, echo = TRUE}
-## Slide title {.smaller .build}
-```
+## Motivation for Research Questions | Policy Context and Implications {.smaller .build}
+
+
+## Methodology | Strategy and Variables {.smaller .build}
+
+
+## Data Sources | Federal Contracting Data {.smaller .build}
+
+
+## Findings | Analysis and Interpretations {.smaller .build}
+
+
+## Key Limitations | Addressing Analysis Gaps {.smaller .build}
+
+- Threats to Internal Validity
+ +
+- Threats to External Validity
+ +
+
+
 <div>
 [Here](https://garrettgman.github.io/rmarkdown/ioslides_presentation_format.html) is a short tutorial. See Chapter 4.1 in [R Markdown: The Definitive Guide]( https://bookdown.org/yihui/rmarkdown/ioslides-presentation.html) for a more comprehensive treatment.
 </div>
-
-
-# Including output in your slides
-
 
 ## Loading packages {.smaller .build}
 
