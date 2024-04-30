@@ -114,7 +114,7 @@ contracts <- contracts %>%
   mutate(black_firm = recode(black_american_owned_business, "f" = "0", "t" = "1")) %>%
   mutate(hispanic_american_firm = recode(hispanic_american_owned_business, "f" = "0", "t" = "1")) %>%
   mutate(native_american_firm = recode(native_american_owned_business, "f" = "0", "t" = "1")) %>%
-  mutate(other_minorityy_firm = recode(other_minority_owned_business, "f" = "0", "t" = "1"))
+  mutate(other_minority_firm = recode(other_minority_owned_business, "f" = "0", "t" = "1"))
 
 #drop old T/F coded variables
 
